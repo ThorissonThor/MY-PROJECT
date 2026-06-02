@@ -10,7 +10,6 @@ jobs:
   report:
     runs-on: ubuntu-latest
     permissions:
-      issues: write
       contents: read
 
     steps:
@@ -25,34 +24,27 @@ jobs:
           NEW_FILES=$(git log --since="7 days ago" --diff-filter=A --name-only --pretty=format: | sort -u | grep -v '^$')
           if [ -z "$NEW_FILES" ]; then
             echo "has_files=false" >> $GITHUB_OUTPUT
+            echo "body=No new files were added in the past week." >> $GITHUB_OUTPUT
           else
             echo "has_files=true" >> $GITHUB_OUTPUT
+            FORMATTED=$(echo "$NEW_FILES" | sed 's/^/- /')
             {
-              echo 'files<<EOF'
-              echo "$NEW_FILES"
+              echo 'body<<EOF'
+              echo "New files added in the past week:"
+              echo ""
+              echo "$FORMATTED"
               echo 'EOF'
             } >> $GITHUB_OUTPUT
           fi
 
-      - name: Create GitHub issue with report
-        uses: actions/github-script@v7
+      - name: Send email report
+        uses: dawidd6/action-send-mail@v3
         with:
-          script: |
-            const hasFiles = '${{ steps.new-files.outputs.has_files }}' === 'true';
-            const today = new Date().toISOString().split('T')[0];
-
-            let body;
-            if (hasFiles) {
-              const files = `${{ steps.new-files.outputs.files }}`;
-              const fileList = files.trim().split('\n').map(f => `- \`${f}\``).join('\n');
-              body = `## New Files Added in the Past Week\n\n${fileList}\n\n_Generated on ${today}_`;
-            } else {
-              body = `## Weekly New Files Report\n\nNo new files were added in the past week.\n\n_Generated on ${today}_`;
-            }
-
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Weekly New Files Report — ${today}`,
-              body: body
-            });
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: throstur.thor@gmail.com
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: "MY-PROJECT — New Files Report (${{ github.run_id }})"
+          to: throstur.thor@gmail.com
+          from: throstur.thor@gmail.com
+          body: ${{ steps.new-files.outputs.body }}
