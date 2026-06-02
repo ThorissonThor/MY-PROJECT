@@ -2,7 +2,6 @@ name: Weekly New Files Report
 
 on:
   schedule:
-    - cron: '0 10 * * 1-5'  # Every weekday at 10:00 AM UTC
     - cron: '0 14 * * 1-5'  # Every weekday at 2:00 PM UTC
   workflow_dispatch:      # Allow manual trigger from GitHub UI
 
@@ -21,16 +20,16 @@ jobs:
       - name: Find new files added in the past week
         id: new-files
         run: |
-          NEW_FILES=$(git log --since="7 days ago" --diff-filter=A --name-only --pretty=format: | sort -u | grep -v '^$')
+          NEW_FILES=$(git log --since="24 hours ago" --diff-filter=A --name-only --pretty=format: | sort -u | grep -v '^$')
           if [ -z "$NEW_FILES" ]; then
             echo "has_files=false" >> $GITHUB_OUTPUT
-            echo "body=No new files were added in the past week." >> $GITHUB_OUTPUT
+            echo "body=No new files were added since yesterday." >> $GITHUB_OUTPUT
           else
             echo "has_files=true" >> $GITHUB_OUTPUT
             FORMATTED=$(echo "$NEW_FILES" | sed 's/^/- /')
             {
               echo 'body<<EOF'
-              echo "New files added in the past week:"
+              echo "New files added since yesterday:"
               echo ""
               echo "$FORMATTED"
               echo 'EOF'
