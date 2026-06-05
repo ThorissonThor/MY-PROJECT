@@ -37,7 +37,7 @@ jobs:
           fi
 
       - name: Send email report
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@42942bc2f8fba4e611b459a018967a6a7c78c68c  # v17
         with:
           server_address: smtp.gmail.com
           server_port: 465
@@ -45,5 +45,5 @@ jobs:
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
           subject: "MY-PROJECT — New Files Report (${{ github.run_id }})"
           to: throstur.thor@gmail.com
-          from: throstur.thor@gmail.com
+          from: Throstur Thor <throstur.thor@gmail.com>
           body: ${{ steps.new-files.outputs.body }}
